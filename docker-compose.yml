@@ -1,12 +1,11 @@
 services:
   kampfgericht:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/nolanus/kampfgerichtsschulung:${TAG:-latest}
     container_name: kampfgericht_app
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
+

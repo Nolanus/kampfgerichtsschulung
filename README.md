@@ -103,17 +103,24 @@ Alle Teilnehmer bedienen parallel ihr eigenes virtuelles Bedienpult. Der Schulun
 
 ### Start mit Docker
 
-Mit vorkonfiguriertem Docker Compose:
-
+#### 1. Vorgebautes Docker-Image aus GitHub Container Registry (GHCR) ausführen
 ```bash
-# Produktions-Build ausführen
-docker compose up --build -d
+# Aktuellstes Image aus GHCR herunterladen & im Hintergrund starten
+docker compose pull
+docker compose up -d
 
-# Oder für lokale Docker-Entwicklung
+# Oder eine spezifische Version ausführen (z.B. v1.0.0 auf Port 8080)
+TAG=1.0.0 PORT=8080 docker compose up -d
+```
+
+#### 2. Lokale Docker-Entwicklung
+```bash
+# Lokale Container-Entwicklung mit Live-Reload
 npm run dev:docker
 ```
 
-Die Anwendung ist anschließend unter `http://localhost:3000` erreichbar.
+Die Anwendung ist anschließend unter [http://localhost:3000](http://localhost:3000) erreichbar.
+
 
 ---
 
