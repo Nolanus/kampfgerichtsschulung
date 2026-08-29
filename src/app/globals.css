@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@600;700;900&family=Share+Tech+Mono&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+}
+
+body {
+  color: var(--foreground);
+  background: var(--background);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Stramatel Specific Styles */
+.lcd-screen {
+  background: #9ab438;
+  color: #112208;
+  font-family: 'Share Tech Mono', monospace;
+  text-shadow: 1px 1px 0px rgba(0,0,0,0.12);
+  box-shadow: inset 2px 2px 6px rgba(0,0,0,0.45), inset -2px -2px 3px rgba(255,255,255,0.25);
+}
+
+.stramatel-btn {
+  background: radial-gradient(circle at 40% 35%, #ffd84d, #f5bc18 70%, #dfa008 100%);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.7), inset 0 -2px 3px rgba(0,0,0,0.25);
+  transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.05s ease;
+  color: #111827;
+  font-weight: 800;
+  border: 2px solid #292524;
+  aspect-ratio: 1 / 1;
+}
+
+.stramatel-pill-btn {
+  background: radial-gradient(circle at 40% 35%, #ffd84d, #f5bc18 70%, #dfa008 100%);
+  box-shadow: 0 3px 5px rgba(0,0,0,0.3), inset 0 2px 2px rgba(255,255,255,0.7), inset 0 -2px 3px rgba(0,0,0,0.25);
+  transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.05s ease;
+  color: #111827;
+  font-weight: 800;
+  border: 2px solid #292524;
+}
+
+.stramatel-btn:active, .stramatel-btn.active-held,
+.stramatel-pill-btn:active, .stramatel-pill-btn.active-held {
+  transform: translateY(2px) scale(0.96);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.4), inset 0 2px 4px rgba(0,0,0,0.5);
+  background: radial-gradient(circle at 40% 35%, #f59e0b, #d97706 70%, #b45309 100%);
+  border-color: #1c1917;
+  color: #ffffff;
+}
+
+.stramatel-orange-border {
+  border: 2.5px solid #f97316;
+}
+
+/* Shot Clock Specific Styles */
+.digital-shotclock {
+  font-family: 'Orbitron', monospace;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+  color: #dc2626;
+  text-shadow: 0 0 10px rgba(220, 38, 38, 0.4);
+}
+.digital-shotclock.stopped {
+  color: #991b1b;
+  text-shadow: none;
+}
+.digital-shotclock.off {
+  color: rgba(220, 38, 38, 0.1);
+  text-shadow: none;
+}
+
+.btn-touch {
+  transition: transform 0.05s ease, filter 0.05s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+.btn-touch:active {
+  transform: scale(0.97);
+  filter: brightness(0.85);
+}
