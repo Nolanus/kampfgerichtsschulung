@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Stramatel Hauptbedienpult - Mockup</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+    body {
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      background: #f8fafc;
+      font-family: system-ui, -apple-system, sans-serif;
+    }
+
+    .lcd-screen {
+      background: #8fa83b;
+      color: #1a2a0d;
+      font-family: 'Share Tech Mono', monospace;
+      text-shadow: 1px 1px 0px rgba(0,0,0,0.15);
+      box-shadow: inset 2px 2px 5px rgba(0,0,0,0.4), inset -2px -2px 3px rgba(255,255,255,0.2);
+    }
+
+    /* Stramatel Round Button */
+    .stramatel-btn {
+      background: radial-gradient(circle at 35% 35%, #ffd633, #e6ad00 70%, #b38600 100%);
+      box-shadow: 0 3px 5px rgba(0,0,0,0.25), inset 0 2px 3px rgba(255,255,255,0.6), inset 0 -2px 3px rgba(0,0,0,0.3);
+      transition: transform 0.05s ease, box-shadow 0.05s ease, filter 0.05s ease;
+      color: #111;
+      font-weight: 800;
+      border: 2px solid #8c6800;
+    }
+    .stramatel-btn:active, .stramatel-btn.active-held {
+      transform: translateY(2px) scale(0.96);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3), inset 0 2px 4px rgba(0,0,0,0.6);
+      background: radial-gradient(circle at 35% 35%, #ff9900, #cc7a00 70%, #995c00 100%);
+      border-color: #663d00;
+      color: #ffffff;
+    }
+
+    .border-zone-orange {
+      border: 3px solid #ff7a00;
+      border-radius: 40px;
+    }
+
+    .trapezoid-zone {
+      border: 3px solid #ff7a00;
+      border-radius: 35px;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-3 text-slate-800">
+
+  <!-- Top Navigation (Light) -->
+  <div class="w-full max-w-5xl flex items-center justify-between mb-3 text-xs text-slate-600">
+    <div class="flex items-center gap-2">
+      <a href="index.html" class="px-3 py-1.5 bg-white hover:bg-slate-100 text-slate-700 font-medium rounded-lg border border-slate-300 shadow-sm transition">
+        ⬅ Zur Übersicht
+      </a>
+      <span class="bg-emerald-50 text-emerald-700 border border-emerald-300 px-2.5 py-1 rounded-lg font-medium">
+        Modus: Stramatel Hauptkonsole (Zeit & Punkte)
+      </span>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-slate-500">Sitzung: <b class="font-mono text-slate-800">KAMPF-8492</b></span>
+      <span class="bg-emerald-100 text-emerald-800 text-[11px] px-2 py-0.5 rounded-full font-medium">● Verbunden</span>
+    </div>
+  </div>
+
+  <!-- Physical Enclosure Mockup -->
+  <div class="relative w-full max-w-5xl bg-gradient-to-b from-slate-200 via-slate-300 to-slate-400 p-4 sm:p-6 rounded-3xl shadow-xl border-2 border-slate-300">
+    
+    <!-- Metal Connectors on Top -->
+    <div class="absolute -top-3 left-1/2 -translate-x-12 flex gap-10">
+      <div class="w-6 h-3 bg-gradient-to-b from-slate-100 to-slate-300 rounded-t border border-slate-400 shadow-sm"></div>
+      <div class="w-6 h-3 bg-gradient-to-b from-slate-100 to-slate-300 rounded-t border border-slate-400 shadow-sm"></div>
+    </div>
+
+    <!-- Main Green Front Panel -->
+    <div class="relative w-full bg-[#189b70] rounded-2xl p-4 sm:p-6 shadow-inner border-2 border-[#0d6e4e]">
+      
+      <!-- Top Row: On/Off, Heim / LCD / Gäste, Periode -->
+      <div class="grid grid-cols-12 gap-3 items-center mb-4">
+        
+        <!-- Left top: ON/OFF & PROGR 14 -->
+        <div class="col-span-2 flex flex-col gap-3">
+          <button id="btnOnOff" class="stramatel-btn w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-xs leading-tight">
+            <span>ON</span>
+            <span class="text-[10px] border-t border-black/40 w-8 text-center pt-0.5">OFF</span>
+          </button>
+          
+          <button id="btnProgr14" class="stramatel-btn w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+            <span>PROGR.</span>
+            <span class="text-xs font-black">14</span>
+          </button>
+        </div>
+
+        <!-- Center top: HEIM - LCD Display - GÄSTE -->
+        <div class="col-span-8 flex flex-col items-center">
+          <div class="w-full flex justify-between px-6 mb-1 text-[#0f4b39] font-black text-xl sm:text-2xl tracking-widest">
+            <span>HEIM</span>
+            <span>GÄSTE</span>
+          </div>
+
+          <!-- LCD Matrix Screen -->
+          <div class="lcd-screen w-full max-w-xl h-16 sm:h-20 rounded-lg p-2.5 flex flex-col justify-between border-2 border-[#556926]">
+            <!-- Line 1 -->
+            <div class="flex justify-between items-center text-sm sm:text-lg font-bold tracking-wider">
+              <span id="lcdScoreHeim" class="text-xl sm:text-2xl font-black">000</span>
+              <span id="lcdGameTime" class="text-2xl sm:text-3xl font-black tracking-widest text-[#111]">10:00.0</span>
+              <span id="lcdScoreGast" class="text-xl sm:text-2xl font-black">000</span>
+            </div>
+            <!-- Line 2 -->
+            <div class="flex justify-between items-center text-xs sm:text-sm font-semibold border-t border-black/20 pt-1">
+              <span>FOULS: <b id="lcdFoulsHeim" class="text-base">0</b></span>
+              <span class="bg-[#788e31] px-2 rounded text-[#111] font-bold">
+                <span id="lcdModeLabel">PERIODE</span> <span id="lcdPeriod">1</span>
+              </span>
+              <span>FOULS: <b id="lcdFoulsGast" class="text-base">0</b></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right top: PERIODE / EXTRAZEIT 15 -->
+        <div class="col-span-2 flex justify-end">
+          <button id="btnPeriod15" class="stramatel-btn w-14 h-14 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-[9px] leading-tight text-center">
+            <span>PERIODE</span>
+            <span>EXTRAZEIT</span>
+            <span class="text-xs font-black">15</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Main Button Matrix -->
+      <div class="grid grid-cols-12 gap-2 sm:gap-4 items-center mt-2">
+        
+        <!-- Left Side: HEIM OVAL (Fehler 2, Punkte 1) -->
+        <div class="col-span-3 border-zone-orange p-2 sm:p-3 flex flex-col items-center gap-3 bg-white/5 backdrop-blur-sm">
+          <div class="text-[#ff9d42] font-black text-xs sm:text-sm tracking-wider">HEIM</div>
+          <button id="btnFehlerHeim2" class="stramatel-btn w-13 h-13 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+            <span>FEHLER</span>
+            <span class="text-xs font-black">2</span>
+          </button>
+          <button id="btnPunkteHeim1" class="stramatel-btn w-13 h-13 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+            <span>PUNKTE</span>
+            <span class="text-xs font-black">1</span>
+          </button>
+        </div>
+
+        <!-- Middle-Left (Undo 3, Null 4, Korr 5) -->
+        <div class="col-span-2 flex flex-col items-center justify-around gap-2 h-full py-1">
+          <button id="btnNull4" class="stramatel-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+            <span>NULL</span>
+            <span class="text-xs font-black">4</span>
+          </button>
+          <div class="flex gap-2">
+            <!-- BUTTON 3 (KORREKTUR / RÜCKNAHME ↶ 3) -->
+            <button id="btnUndo3" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight" title="Gedrückt halten auf Touchscreen oder Klick/Shift auf PC">
+              <span class="text-base leading-none">↶</span>
+              <span class="text-[10px] font-black">3</span>
+            </button>
+            <button id="btnKorr5" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+              <span>KORR.</span>
+              <span class="text-[10px] font-black">5</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- CENTER: START / STOPP Zone (Auszeit 6, Hupe 8, Chrono 7) -->
+        <div class="col-span-3 trapezoid-zone p-2 sm:p-3 flex flex-col items-center justify-between bg-white/10 backdrop-blur-sm shadow-md">
+          <div class="text-[9px] sm:text-[10px] font-bold text-[#ff9d42] flex justify-between w-full px-1">
+            <span>◄ PROGRAMMIEREN</span>
+            <span>►</span>
+          </div>
+
+          <div class="flex justify-between w-full px-1 my-1">
+            <!-- Auszeit 6 -->
+            <button id="btnAuszeit6" class="stramatel-btn w-13 h-13 sm:w-15 sm:h-15 rounded-full flex flex-col items-center justify-center text-[9px] leading-tight">
+              <span>AUSZEIT</span>
+              <span class="text-xs font-black">6</span>
+            </button>
+            
+            <!-- Hupe / Sirene 8 -->
+            <button id="btnHupe8" class="stramatel-btn w-13 h-13 sm:w-15 sm:h-15 rounded-full flex flex-col items-center justify-center text-[9px] leading-tight">
+              <span class="text-sm">📢</span>
+              <span class="text-xs font-black">8</span>
+            </button>
+          </div>
+
+          <div class="text-[#ff9d42] font-black text-xs tracking-wider">START/STOPP</div>
+
+          <!-- CHRONO 7 (Center Start/Stop) -->
+          <button id="btnChrono7" class="stramatel-btn w-14 h-14 sm:w-18 sm:h-18 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight mt-1 border-4 border-[#ffb300]">
+            <span class="font-extrabold text-[11px]">CHRONO.</span>
+            <span class="text-sm font-black">7</span>
+            <span class="text-[8px] font-bold">VALID.</span>
+          </button>
+        </div>
+
+        <!-- Middle-Right Section (Valid Satz 10, Anzeige 9, Aufschlag 11) -->
+        <div class="col-span-2 flex flex-col items-center justify-around gap-2 h-full py-1">
+          <button id="btnValidSatz10" class="stramatel-btn w-12 h-12 sm:w-14 sm:h-14 rounded-full flex flex-col items-center justify-center text-[8px] leading-tight text-center">
+            <span>VALID.</span>
+            <span>SATZ</span>
+            <span class="text-[10px] font-black">10</span>
+          </button>
+          <div class="flex gap-2">
+            <button id="btnAnzeige9" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[8px] leading-tight">
+              <span>◄►</span>
+              <span class="text-[7px]">ANZEIGE</span>
+              <span class="text-[10px] font-black">9</span>
+            </button>
+            <button id="btnAufschlag11" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[8px] leading-tight">
+              <span>◄►</span>
+              <span class="text-[7px]">AUFSCHL.</span>
+              <span class="text-[10px] font-black">11</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Right Side: GÄSTE OVAL (Fehler 12, Punkte 13) -->
+        <div class="col-span-2 border-zone-orange p-2 sm:p-3 flex flex-col items-center gap-3 bg-white/5 backdrop-blur-sm">
+          <div class="text-[#ff9d42] font-black text-xs sm:text-sm tracking-wider">GÄSTE</div>
+          <button id="btnFehlerGast12" class="stramatel-btn w-13 h-13 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+            <span>FEHLER</span>
+            <span class="text-xs font-black">12</span>
+          </button>
+          <button id="btnPunkteGast13" class="stramatel-btn w-13 h-13 sm:w-16 sm:h-16 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+            <span>PUNKTE</span>
+            <span class="text-xs font-black">13</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Explanatory Box for Multi-Touch & Non-Touch Operation -->
+  <div class="w-full max-w-5xl mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+    <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+      <div class="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+        <span>📱</span> <b>Auf Tablets / Touchscreens (Multi-Touch)</b>
+      </div>
+      <p class="text-slate-600 leading-relaxed">
+        • <b>Echtes Multi-Touch:</b> Halte mit einem Finger <b>Button 3 (↶)</b> gedrückt und tippe mit dem zweiten Finger auf <b>Punkte (1/13)</b> oder <b>Fehler (2/12)</b> zum Abziehen.<br/>
+        • <b>Einhand-Komfort:</b> Einmaliges Antippen von Button 3 aktiviert den Korrekturmodus für die nächste Taste.
+      </p>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
+      <div class="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+        <span>💻</span> <b>Auf Laptops / PCs (Maus & Tastatur)</b>
+      </div>
+      <p class="text-slate-600 leading-relaxed">
+        • <b>Tastatur:</b> Halte Taste <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-800">3</kbd> oder <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-800">Shift</kbd> gedrückt, während du mit der Maus auf Punkte klickst.<br/>
+        • <b>Maus-Klick:</b> Klicke Button 3 einmal an (leuchtet orange) ➜ klicke danach auf den Punkt-Button zum Abziehen.
+      </p>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="w-full max-w-5xl mt-2 bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex items-center justify-between text-xs text-slate-600">
+    <div class="flex items-center gap-2">
+      <span id="statusIndicatorDot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+      <span id="lastActionLog" class="font-medium text-slate-700">Bereit</span>
+    </div>
+    <div id="correctionStatusBadge" class="hidden text-xs font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded border border-amber-300">
+      ↶ RÜCKNAHME AKTIV (Zieht ab)
+    </div>
+  </div>
+
+  <script>
+    // Audio Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+    function playBeep(freq = 800, duration = 0.05, type = 'sine') {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {}
+    }
+
+    function playHorn() {
+      try {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc1.type = 'sawtooth';
+        osc2.type = 'square';
+        osc1.frequency.value = 220;
+        osc2.frequency.value = 440;
+        gain.gain.setValueAtTime(0.35, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 1.2);
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc1.start();
+        osc2.start();
+        osc1.stop(audioCtx.currentTime + 1.2);
+        osc2.stop(audioCtx.currentTime + 1.2);
+      } catch(e) {}
+    }
+
+    // State Variables
+    let timeRemainingTenths = 10 * 60 * 10;
+    let isRunning = false;
+    let timerInterval = null;
+    let scoreHeim = 0;
+    let scoreGast = 0;
+    let foulsHeim = 0;
+    let foulsGast = 0;
+    let currentPeriod = 1;
+    
+    // Multi-Touch & Correction State
+    let isHoldingButton3 = false;
+    let isToggleCorrectionActive = false;
+
+    const lcdGameTime = document.getElementById('lcdGameTime');
+    const lcdScoreHeim = document.getElementById('lcdScoreHeim');
+    const lcdScoreGast = document.getElementById('lcdScoreGast');
+    const lcdFoulsHeim = document.getElementById('lcdFoulsHeim');
+    const lcdFoulsGast = document.getElementById('lcdFoulsGast');
+    const lcdPeriod = document.getElementById('lcdPeriod');
+    const lcdModeLabel = document.getElementById('lcdModeLabel');
+    const lastActionLog = document.getElementById('lastActionLog');
+    const btnUndo3 = document.getElementById('btnUndo3');
+    const correctionStatusBadge = document.getElementById('correctionStatusBadge');
+    const statusIndicatorDot = document.getElementById('statusIndicatorDot');
+
+    function isCorrectionMode() {
+      return isHoldingButton3 || isToggleCorrectionActive;
+    }
+
+    function updateCorrectionUI() {
+      if (isCorrectionMode()) {
+        btnUndo3.classList.add('active-held');
+        correctionStatusBadge.classList.remove('hidden');
+        statusIndicatorDot.className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
+        lcdModeLabel.textContent = "KORR ↶";
+      } else {
+        btnUndo3.classList.remove('active-held');
+        correctionStatusBadge.classList.add('hidden');
+        statusIndicatorDot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        lcdModeLabel.textContent = "PERIODE";
+      }
+    }
+
+    function formatTime(tenths) {
+      const totalSec = Math.floor(tenths / 10);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      const t = tenths % 10;
+      return `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}.${t}`;
+    }
+
+    function updateDisplay() {
+      lcdGameTime.textContent = formatTime(timeRemainingTenths);
+      lcdScoreHeim.textContent = String(scoreHeim).padStart(3, '0');
+      lcdScoreGast.textContent = String(scoreGast).padStart(3, '0');
+      lcdFoulsHeim.textContent = foulsHeim;
+      lcdFoulsGast.textContent = foulsGast;
+      lcdPeriod.textContent = currentPeriod > 4 ? `OT${currentPeriod - 4}` : currentPeriod;
+    }
+
+    function logAction(action) {
+      lastActionLog.textContent = `Aktion: ${action} (${new Date().toLocaleTimeString()})`;
+      if (navigator.vibrate) navigator.vibrate(20);
+    }
+
+    function tick() {
+      if (timeRemainingTenths > 0) {
+        timeRemainingTenths--;
+        updateDisplay();
+        if (timeRemainingTenths === 0) {
+          isRunning = false;
+          clearInterval(timerInterval);
+          playHorn();
+          logAction("Sirene: Viertel beendet (00:00)");
+        }
+      }
+    }
+
+    // MULTI-TOUCH & POINTER EVENT IMPLEMENTATION FOR BUTTON 3
+    // 1. Pointerdown on Button 3 starts holding
+    btnUndo3.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      playBeep(600, 0.05);
+      isHoldingButton3 = true;
+      updateCorrectionUI();
+      logAction("Button 3 (↶) gedrückt gehalten: Korrekturmodus aktiv");
+    });
+
+    // 2. Pointerup / cancel stops holding
+    window.addEventListener('pointerup', () => {
+      if (isHoldingButton3) {
+        isHoldingButton3 = false;
+        updateCorrectionUI();
+      }
+    });
+    window.addEventListener('pointercancel', () => {
+      if (isHoldingButton3) {
+        isHoldingButton3 = false;
+        updateCorrectionUI();
+      }
+    });
+
+    // 3. Fallback Click on Button 3 toggles sticky mode (for mouse/desktop)
+    btnUndo3.addEventListener('click', (e) => {
+      if (e.pointerType === 'mouse') {
+        isToggleCorrectionActive = !isToggleCorrectionActive;
+        updateCorrectionUI();
+        logAction(isToggleCorrectionActive ? "Korrekturmodus (Toggle) AKTIV" : "Korrekturmodus INAKTIV");
+      }
+    });
+
+    // 4. Keyboard Support (Hold '3' or 'Shift' key)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '3' || e.key === 'Shift') {
+        if (!isHoldingButton3) {
+          isHoldingButton3 = true;
+          updateCorrectionUI();
+        }
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.key === '3' || e.key === 'Shift') {
+        isHoldingButton3 = false;
+        updateCorrectionUI();
+      }
+    });
+
+    // Actions that can be subtracted when Button 3 is held:
+    // Heim Punkte (Button 1)
+    document.getElementById('btnPunkteHeim1').addEventListener('click', () => {
+      if (isCorrectionMode()) {
+        playBeep(450, 0.08);
+        scoreHeim = Math.max(0, scoreHeim - 1);
+        logAction("Rücknahme: HEIM -1 Punkt (Button 3 + 1)");
+        isToggleCorrectionActive = false; // Reset toggle if used
+      } else {
+        playBeep(1100, 0.05);
+        scoreHeim += 1;
+        logAction("HEIM +1 Punkt");
+      }
+      updateCorrectionUI();
+      updateDisplay();
+    });
+
+    // Gast Punkte (Button 13)
+    document.getElementById('btnPunkteGast13').addEventListener('click', () => {
+      if (isCorrectionMode()) {
+        playBeep(450, 0.08);
+        scoreGast = Math.max(0, scoreGast - 1);
+        logAction("Rücknahme: GAST -1 Punkt (Button 3 + 13)");
+        isToggleCorrectionActive = false;
+      } else {
+        playBeep(1100, 0.05);
+        scoreGast += 1;
+        logAction("GAST +1 Punkt");
+      }
+      updateCorrectionUI();
+      updateDisplay();
+    });
+
+    // Heim Fehler (Button 2)
+    document.getElementById('btnFehlerHeim2').addEventListener('click', () => {
+      if (isCorrectionMode()) {
+        playBeep(400, 0.08);
+        foulsHeim = Math.max(0, foulsHeim - 1);
+        logAction("Rücknahme: HEIM -1 Teamfoul (Button 3 + 2)");
+        isToggleCorrectionActive = false;
+      } else {
+        if (foulsHeim >= 5) {
+          playBeep(350, 0.04);
+          logAction("HEIM Teamfouls bereits auf Maximum (5)");
+          return;
+        }
+        playBeep(700, 0.06);
+        foulsHeim++;
+        logAction(`HEIM +1 Teamfoul (${foulsHeim}/5)`);
+      }
+      updateCorrectionUI();
+      updateDisplay();
+    });
+
+    // Gast Fehler (Button 12)
+    document.getElementById('btnFehlerGast12').addEventListener('click', () => {
+      if (isCorrectionMode()) {
+        playBeep(400, 0.08);
+        foulsGast = Math.max(0, foulsGast - 1);
+        logAction("Rücknahme: GAST -1 Teamfoul (Button 3 + 12)");
+        isToggleCorrectionActive = false;
+      } else {
+        if (foulsGast >= 5) {
+          playBeep(350, 0.04);
+          logAction("GAST Teamfouls bereits auf Maximum (5)");
+          return;
+        }
+        playBeep(700, 0.06);
+        foulsGast++;
+        logAction(`GAST +1 Teamfoul (${foulsGast}/5)`);
+      }
+      updateCorrectionUI();
+      updateDisplay();
+    });
+
+    // Periode (Button 15)
+    document.getElementById('btnPeriod15').addEventListener('click', () => {
+      if (isCorrectionMode()) {
+        currentPeriod = Math.max(1, currentPeriod - 1);
+        logAction(`Rücknahme: Periode auf ${currentPeriod} zurückgesetzt`);
+        isToggleCorrectionActive = false;
+      } else {
+        playBeep(600, 0.1);
+        currentPeriod++;
+        timeRemainingTenths = 10 * 60 * 10;
+        foulsHeim = 0;
+        foulsGast = 0;
+        if (isRunning) {
+          isRunning = false;
+          clearInterval(timerInterval);
+        }
+        logAction(`Neue Spielperiode: Viertel ${currentPeriod}`);
+      }
+      updateCorrectionUI();
+      updateDisplay();
+    });
+
+    // Chrono (Button 7)
+    document.getElementById('btnChrono7').addEventListener('click', () => {
+      if (isCorrectionMode()) {
+        playBeep(650, 0.06);
+        const isUnderOneMinute = timeRemainingTenths < 600;
+        const increment = isUnderOneMinute ? 1 : 10;
+        timeRemainingTenths = Math.min(10 * 60 * 10, timeRemainingTenths + increment);
+        isToggleCorrectionActive = false;
+        const addedText = isUnderOneMinute ? "+0.1 Sekunde" : "+1 Sekunde";
+        logAction(`Korrektur: ${addedText} auf Spieluhr (${formatTime(timeRemainingTenths)})`);
+        updateCorrectionUI();
+        updateDisplay();
+      } else {
+        playBeep(900, 0.08);
+        isRunning = !isRunning;
+        if (isRunning) {
+          timerInterval = setInterval(tick, 100);
+          logAction("START (Chrono läuft)");
+        } else {
+          clearInterval(timerInterval);
+          logAction("STOPP (Chrono angehalten)");
+        }
+      }
+    });
+
+    // Hupe (Button 8)
+    document.getElementById('btnHupe8').addEventListener('click', () => {
+      playHorn();
+      logAction("Sirene manuell ausgelöst");
+    });
+
+    // Null (Button 4)
+    document.getElementById('btnNull4').addEventListener('click', () => {
+      playBeep(400, 0.05);
+      isToggleCorrectionActive = false;
+      isHoldingButton3 = false;
+      updateCorrectionUI();
+      logAction("Korrektur abgebrochen / Reset");
+    });
+
+    // Korr (Button 5) - ohne Funktion
+    const btnKorr5 = document.getElementById('btnKorr5');
+    if (btnKorr5) {
+      btnKorr5.addEventListener('click', () => {
+        playBeep(700, 0.05);
+        logAction("Taste 5 (KORR.) ohne Funktion");
+      });
+    }
+
+    // Auszeit (Button 6)
+    document.getElementById('btnAuszeit6').addEventListener('click', () => {
+      playBeep(1200, 0.15);
+      logAction("Auszeit gestartet");
+    });
+
+    // On/Off
+    document.getElementById('btnOnOff').addEventListener('click', () => {
+      playBeep(1000, 0.05);
+      logAction("Display ON/OFF getoggelt");
+    });
+
+    updateDisplay();
+  </script>
+</body>
+</html>

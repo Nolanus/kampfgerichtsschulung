@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schulung Beitreten - Kampfgericht</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800 flex flex-col items-center justify-center p-4">
+
+  <div class="w-full max-w-md bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+    
+    <!-- Header -->
+    <div class="text-center mb-6">
+      <div class="w-12 h-12 bg-slate-100 border border-slate-200 text-slate-800 rounded-xl flex items-center justify-center text-2xl mx-auto mb-3">
+        🏀
+      </div>
+      <h1 class="text-xl font-bold text-slate-900">Kampfgericht-Schulung</h1>
+      <p class="text-xs text-slate-500 mt-1">Tritt der Sitzung bei und wähle deine Konsole</p>
+    </div>
+
+    <form id="joinForm" class="space-y-4">
+      <!-- Room PIN -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+          Sitzungs-PIN
+        </label>
+        <input 
+          type="text" 
+          id="roomPin" 
+          value="KAMPF-8492" 
+          required 
+          class="w-full bg-slate-50 border border-slate-300 focus:border-slate-800 rounded-xl px-4 py-3 text-lg font-mono font-bold text-center tracking-widest text-slate-900 focus:outline-none transition"
+        />
+      </div>
+
+      <!-- Participant Name -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">
+          Dein Vor- & Nachname
+        </label>
+        <input 
+          type="text" 
+          id="participantName" 
+          placeholder="z. B. Max Mustermann" 
+          value="Max Mustermann"
+          required 
+          class="w-full bg-slate-50 border border-slate-300 focus:border-slate-800 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 focus:outline-none transition"
+        />
+      </div>
+
+      <!-- Role Selection -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-2">
+          Wähle dein Bedienpult
+        </label>
+
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Option 1: 24s Shotclock -->
+          <label class="relative flex flex-col items-center text-center p-3.5 bg-slate-50 border-2 border-slate-200 hover:border-slate-400 rounded-xl cursor-pointer transition select-none group has-[:checked]:border-slate-900 has-[:checked]:bg-slate-100">
+            <input type="radio" name="consoleRole" value="shotclock" checked class="sr-only" />
+            <span class="text-2xl mb-1">⏱️</span>
+            <span class="text-xs font-bold text-slate-800">24s Shotclock</span>
+            <span class="text-[10px] text-slate-500 mt-0.5">Touchscreen Pult</span>
+          </label>
+
+          <!-- Option 2: Zeitnehmer -->
+          <label class="relative flex flex-col items-center text-center p-3.5 bg-slate-50 border-2 border-slate-200 hover:border-slate-400 rounded-xl cursor-pointer transition select-none group has-[:checked]:border-slate-900 has-[:checked]:bg-slate-100">
+            <input type="radio" name="consoleRole" value="zeitnehmer" class="sr-only" />
+            <span class="text-2xl mb-1">📟</span>
+            <span class="text-xs font-bold text-slate-800">Zeitnehmer</span>
+            <span class="text-[10px] text-slate-500 mt-0.5">Hauptanzeige</span>
+          </label>
+        </div>
+      </div>
+
+      <!-- Submit Button -->
+      <button 
+        type="submit" 
+        class="w-full bg-slate-900 hover:bg-slate-800 active:scale-98 text-white font-bold text-sm py-3.5 rounded-xl shadow-sm transition flex items-center justify-center gap-2 mt-4"
+      >
+        <span>Konsole starten</span> ➜
+      </button>
+    </form>
+
+    <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+      <a href="index.html" class="text-xs text-slate-500 hover:text-slate-800 underline">
+        ⬅ Zurück zur Übersicht
+      </a>
+    </div>
+
+  </div>
+
+  <script>
+    document.getElementById('joinForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const role = document.querySelector('input[name="consoleRole"]:checked').value;
+      if (role === 'shotclock') {
+        window.location.href = '02_shotclock_touch.html';
+      } else {
+        window.location.href = '01_stramatel_main.html';
+      }
+    });
+  </script>
+
+</body>
+</html>
