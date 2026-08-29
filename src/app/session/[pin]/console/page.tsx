@@ -177,9 +177,9 @@ function ConsoleContent({ pin }: { pin: string }) {
   return (
     <main className="min-h-screen bg-slate-50 flex flex-col justify-center py-2 relative">
 
-      {/* Session Ended Overlay */}
-      {sessionEnded && (
-        <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
+      {/* Session Ended Screen */}
+      {sessionEnded ? (
+        <div className="fixed inset-0 bg-slate-900/95 backdrop-blur-md flex items-center justify-center z-[9999] p-4">
           <div className="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl border border-slate-200 text-center space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto">
               <span className="text-sm font-black text-slate-600">END</span>
@@ -192,62 +192,64 @@ function ConsoleContent({ pin }: { pin: string }) {
             </div>
             <a
               href="/"
-              className="block bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition text-center"
+              className="block bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs py-2.5 px-4 rounded-xl transition text-center cursor-pointer shadow-sm"
             >
               Zurück zur Lobby
             </a>
           </div>
         </div>
-      )}
-
-      {/* Toast Notification for Sync & Master status */}
-      {toastMessage && (
-        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-2 animate-fadeIn">
-          <Crown className="w-3.5 h-3.5 text-amber-400" />
-          <span>{toastMessage}</span>
-        </div>
-      )}
-
-      {/* Main Console view */}
-      {currentRole === 'zeitnehmer' ? (
-        <StramatelConsole
-          key="console-zeitnehmer"
-          pin={pin}
-          participantName={name}
-          isMaster={isMaster}
-          allowRoleSwitch={allowRoleSwitch}
-          onRequestRoleSwitch={() => setIsSwitchModalOpen(true)}
-          initialState={latestStramatelState}
-        />
       ) : (
-        <ShotclockConsole
-          key="console-shotclock"
-          pin={pin}
-          participantName={name}
-          isMaster={isMaster}
-          allowRoleSwitch={allowRoleSwitch}
-          onRequestRoleSwitch={() => setIsSwitchModalOpen(true)}
-          initialState={latestShotclockState}
-        />
+        <>
+          {/* Toast Notification for Sync & Master status */}
+          {toastMessage && (
+            <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/95 backdrop-blur-md text-white text-xs font-bold px-4 py-2.5 rounded-2xl shadow-xl border border-slate-700 flex items-center gap-2 animate-fadeIn">
+              <Crown className="w-3.5 h-3.5 text-amber-400" />
+              <span>{toastMessage}</span>
+            </div>
+          )}
+
+          {/* Main Console view */}
+          {currentRole === 'zeitnehmer' ? (
+            <StramatelConsole
+              key="console-zeitnehmer"
+              pin={pin}
+              participantName={name}
+              isMaster={isMaster}
+              allowRoleSwitch={allowRoleSwitch}
+              onRequestRoleSwitch={() => setIsSwitchModalOpen(true)}
+              initialState={latestStramatelState}
+            />
+          ) : (
+            <ShotclockConsole
+              key="console-shotclock"
+              pin={pin}
+              participantName={name}
+              isMaster={isMaster}
+              allowRoleSwitch={allowRoleSwitch}
+              onRequestRoleSwitch={() => setIsSwitchModalOpen(true)}
+              initialState={latestShotclockState}
+            />
+          )}
+
+          {/* Role Selection Modal */}
+          <RoleSwitchModal
+            isOpen={isSwitchModalOpen}
+            currentRole={currentRole}
+            isLoading={isChangingRole}
+            onSelectRole={handleSelectRole}
+            onClose={() => setIsSwitchModalOpen(false)}
+          />
+
+          {/* Role Changed Success / Info Modal */}
+          <RoleChangedModal
+            isOpen={roleChangedInfo.isOpen}
+            newRole={roleChangedInfo.newRole}
+            changedBy={roleChangedInfo.changedBy}
+            message={roleChangedInfo.message}
+            onClose={() => setRoleChangedInfo((prev) => ({ ...prev, isOpen: false }))}
+          />
+        </>
       )}
-
-      {/* Role Selection Modal */}
-      <RoleSwitchModal
-        isOpen={isSwitchModalOpen}
-        currentRole={currentRole}
-        isLoading={isChangingRole}
-        onSelectRole={handleSelectRole}
-        onClose={() => setIsSwitchModalOpen(false)}
-      />
-
-      {/* Role Changed Success / Info Modal */}
-      <RoleChangedModal
-        isOpen={roleChangedInfo.isOpen}
-        newRole={roleChangedInfo.newRole}
-        changedBy={roleChangedInfo.changedBy}
-        message={roleChangedInfo.message}
-        onClose={() => setRoleChangedInfo((prev) => ({ ...prev, isOpen: false }))}
-      />
 
     </main>
   );

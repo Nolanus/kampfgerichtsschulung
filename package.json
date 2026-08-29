@@ -4,7 +4,7 @@
   "description": "",
   "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
+    "dev": "tsx watch server.ts",
     "dev:docker": "docker compose -f docker-compose.dev.yml up",
     "build": "next build",
     "start": "NODE_ENV=production tsx server.ts",
