@@ -2,13 +2,20 @@
   "name": "kampfgericht",
   "version": "1.0.0",
   "description": "",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "tsx watch server.ts",
     "dev:docker": "docker compose -f docker-compose.dev.yml up",
     "build": "next build",
     "start": "NODE_ENV=production tsx server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm run build",
+    "preversion": "npm run check",
+    "postversion": "git push && git push --tags",
+    "release:patch": "npm version patch -m \"chore(release): v%s\"",
+    "release:minor": "npm version minor -m \"chore(release): v%s\"",
+    "release:major": "npm version major -m \"chore(release): v%s\""
   },
   "dependencies": {
     "clsx": "^2.1.1",

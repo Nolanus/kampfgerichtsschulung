@@ -18,6 +18,7 @@ Eine moderne, webbasierte Echtzeit-Schulungsplattform für Basketball-Kampfricht
   - [Start mit Docker](#start-mit-docker)
 - [Projektstruktur](#-projektstruktur)
 - [Bedienung & Tastaturkürzel](#-bedienung--tastaturkürzel)
+- [Release & Versionierung](#-release--versionierung)
 - [Lizenz](#-lizenz)
 
 ---
@@ -165,6 +166,26 @@ kampfgericht/
 
 ---
 
+## 📦 Release & Versionierung
+
+Neue Versionen werden über `npm` bereitgestellt. Die Release-Skripte führen automatisch vorab alle Prüfungen (`typecheck`, `build`) aus, erhöhen die Versionsnummer in `package.json`, erstellen einen standardkonformen Git-Commit & Git-Tag (`vX.Y.Z`) und pushen diesen zu GitHub (was den CI/CD-Workflow & Docker-Build auslöst).
+
+```bash
+# Patch-Release (z. B. 1.0.0 -> 1.0.1)
+npm run release:patch
+
+# Minor-Release (z. B. 1.0.0 -> 1.1.0)
+npm run release:minor
+
+# Major-Release (z. B. 1.0.0 -> 2.0.0)
+npm run release:major
+```
+
+*Hinweis:* Vor dem Release muss der Git-Arbeitsbaum sauber (`clean`) sein. Sollte der Typecheck oder Build fehlschlagen, wird der Release-Vorgang automatisch abgebrochen, bevor ein Commit oder Tag erstellt wird.
+
+---
+
 ## 📄 Lizenz
 
-Dieses Projekt ist für Schulungs- und Ausbildungszwecke im Basketballsport lizenziert. Weitere Details siehe [LICENSE](LICENSE) (falls vorhanden).
+Dieses Projekt ist unter der [MIT-Lizenz](LICENSE) lizenziert.
+
