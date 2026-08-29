@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - master
+      - develop
     tags:
       - 'v*.*.*'
       - 'v*'
@@ -12,6 +13,7 @@ on:
     branches:
       - main
       - master
+      - develop
 
 jobs:
   test-and-build:
