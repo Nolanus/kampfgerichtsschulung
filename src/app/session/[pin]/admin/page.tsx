@@ -255,24 +255,61 @@ export default function AdminPage({ params }: AdminPageProps) {
   // Local Trainer Chrono Tick on Admin
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (session.trainerStramatelState?.isRunning && masterZeitnehmerId === 'trainer') {
+    if ((session.trainerStramatelState?.isRunning || session.trainerStramatelState?.isTimeoutRunning) && masterZeitnehmerId === 'trainer') {
       interval = setInterval(() => {
         setSession((prev) => {
-          if (!prev.trainerStramatelState || !prev.trainerStramatelState.isRunning) return prev;
-          if (prev.trainerStramatelState.gameTimeTenths > 0) {
-            const nextTenths = prev.trainerStramatelState.gameTimeTenths - 1;
-            const nextState = { ...prev.trainerStramatelState, gameTimeTenths: nextTenths };
-            if (nextTenths === 0) {
+          if (!prev.trainerStramatelState) return prev;
+          // Timeout Countdown
+          if (prev.trainerStramatelState.isTimeoutRunning && (prev.trainerStramatelState.timeoutTenths ?? 0) > 0) {
+            const nextTimeoutTenths = (prev.trainerStramatelState.timeoutTenths ?? 600) - 1;
+            const nextState: StramatelState = { ...prev.trainerStramatelState, timeoutTenths: nextTimeoutTenths };
+            if (nextTimeoutTenths === 100) {
+              soundManager.playTimeoutWarning();
+            } else if (nextTimeoutTenths === 0) {
               soundManager.playHorn();
-              nextState.isRunning = false;
+              nextState.isTimeoutRunning = false;
+              nextState.timeoutTenths = undefined;
             }
-            if (nextTenths % 10 === 0 || nextTenths === 0) {
+            if (nextTimeoutTenths % 10 === 0 || nextTimeoutTenths === 0) {
               const socket = getSocket();
               if (socket.connected) {
                 socket.emit('update_trainer_state', { pin, stramatelState: nextState });
               }
             }
             return { ...prev, trainerStramatelState: nextState };
+          }
+
+          if (prev.trainerStramatelState.isRunning) {
+            if (prev.trainerStramatelState.isCountUp) {
+              const nextTenths = prev.trainerStramatelState.gameTimeTenths + 1;
+              const nextState = { ...prev.trainerStramatelState, gameTimeTenths: nextTenths, isCountUp: true };
+              if (nextTenths % 10 === 0) {
+                const socket = getSocket();
+                if (socket.connected) {
+                  socket.emit('update_trainer_state', { pin, stramatelState: nextState });
+                }
+              }
+              return { ...prev, trainerStramatelState: nextState };
+            } else if (prev.trainerStramatelState.gameTimeTenths > 0) {
+              const nextTenths = prev.trainerStramatelState.gameTimeTenths - 1;
+              const nextState = { ...prev.trainerStramatelState, gameTimeTenths: nextTenths };
+              if (nextTenths === 0) {
+                soundManager.playHorn();
+                nextState.isCountUp = true;
+                nextState.isRunning = true;
+              }
+              if (nextTenths % 10 === 0 || nextTenths === 0) {
+                const socket = getSocket();
+                if (socket.connected) {
+                  socket.emit('update_trainer_state', { pin, stramatelState: nextState });
+                }
+              }
+              return { ...prev, trainerStramatelState: nextState };
+            } else {
+              const nextTenths = prev.trainerStramatelState.gameTimeTenths + 1;
+              const nextState = { ...prev.trainerStramatelState, gameTimeTenths: nextTenths, isCountUp: true };
+              return { ...prev, trainerStramatelState: nextState };
+            }
           }
           return prev;
         });
@@ -281,7 +318,7 @@ export default function AdminPage({ params }: AdminPageProps) {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [session.trainerStramatelState?.isRunning, masterZeitnehmerId, pin]);
+  }, [session.trainerStramatelState?.isRunning, session.trainerStramatelState?.isTimeoutRunning, masterZeitnehmerId, pin]);
 
   // Local Trainer Shotclock Tick on Admin
   useEffect(() => {
@@ -456,6 +493,9 @@ export default function AdminPage({ params }: AdminPageProps) {
       period: Math.max(1, prev.period + delta),
       foulsHeim: delta > 0 ? 0 : prev.foulsHeim,
       foulsGast: delta > 0 ? 0 : prev.foulsGast,
+      gameTimeTenths: delta > 0 ? 10 * 60 * 10 : prev.gameTimeTenths,
+      isCountUp: false,
+      isRunning: false,
     }));
   };
 
@@ -464,6 +504,7 @@ export default function AdminPage({ params }: AdminPageProps) {
     updateTrainerStramatel((prev) => ({
       ...prev,
       gameTimeTenths: Math.max(0, prev.gameTimeTenths + deltaSeconds * 10),
+      isCountUp: false,
     }));
   };
 
@@ -473,6 +514,7 @@ export default function AdminPage({ params }: AdminPageProps) {
       ...prev,
       gameTimeTenths: minutes * 60 * 10,
       isRunning: false,
+      isCountUp: false,
     }));
   };
 

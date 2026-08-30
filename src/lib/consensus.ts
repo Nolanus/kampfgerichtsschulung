@@ -71,6 +71,7 @@ export function computeConsensusStramatel(
   const periods = stramatelParticipants.map((p) => p.stramatelState!.period);
   const timeoutsHeim = stramatelParticipants.map((p) => p.stramatelState!.timeoutsHeim);
   const timeoutsGast = stramatelParticipants.map((p) => p.stramatelState!.timeoutsGast);
+  const countUps = stramatelParticipants.map((p) => Boolean(p.stramatelState?.isCountUp));
 
   return {
     gameTimeTenths: calculateMedian(times),
@@ -82,6 +83,9 @@ export function computeConsensusStramatel(
     period: calculateMode(periods, defaultFallback.period),
     timeoutsHeim: calculateMode(timeoutsHeim, defaultFallback.timeoutsHeim),
     timeoutsGast: calculateMode(timeoutsGast, defaultFallback.timeoutsGast),
+    isCountUp: calculateMode(countUps, Boolean(defaultFallback.isCountUp)),
+    timeoutTenths: calculateMode(stramatelParticipants.map((p) => p.stramatelState?.timeoutTenths), defaultFallback.timeoutTenths),
+    isTimeoutRunning: calculateMode(stramatelParticipants.map((p) => Boolean(p.stramatelState?.isTimeoutRunning)), Boolean(defaultFallback.isTimeoutRunning)),
   };
 }
 

@@ -10,6 +10,9 @@ export interface StramatelState {
   period: number;
   timeoutsHeim: number;
   timeoutsGast: number;
+  isCountUp?: boolean; // true when game time has expired and break/pause clock counts up
+  timeoutTenths?: number; // 600 = 60.0s countdown during active timeout
+  isTimeoutRunning?: boolean; // true when a 60s timeout countdown is active
 }
 
 export interface ShotclockState {

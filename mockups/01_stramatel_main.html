@@ -65,7 +65,7 @@
       </span>
     </div>
     <div class="flex items-center gap-3">
-      <span class="text-slate-500">Sitzung: <b class="font-mono text-slate-800">KAMPF-8492</b></span>
+      <span class="text-slate-500">Sitzung: <b class="font-mono text-slate-800">KAMPF8492</b></span>
       <span class="bg-emerald-100 text-emerald-800 text-[11px] px-2 py-0.5 rounded-full font-medium">● Verbunden</span>
     </div>
   </div>
@@ -158,12 +158,13 @@
             <span class="text-xs font-black">4</span>
           </button>
           <div class="flex gap-2">
-            <!-- BUTTON 3 (KORREKTUR / RÜCKNAHME ↶ 3) -->
-            <button id="btnUndo3" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight" title="Gedrückt halten auf Touchscreen oder Klick/Shift auf PC">
+            <!-- BUTTON 3 (↶ 3) -->
+            <button id="btnTaste3" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight" title="Taste 3 (↶)">
               <span class="text-base leading-none">↶</span>
               <span class="text-[10px] font-black">3</span>
             </button>
-            <button id="btnKorr5" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight">
+            <!-- BUTTON 5 (KORREKTUR / RÜCKNAHME KORR. 5) -->
+            <button id="btnKorr5" class="stramatel-btn w-11 h-11 sm:w-13 sm:h-13 rounded-full flex flex-col items-center justify-center text-[10px] leading-tight" title="Korrektur (Taste 5) - Gedrückt halten auf Touchscreen oder Klick/Shift auf PC">
               <span>KORR.</span>
               <span class="text-[10px] font-black">5</span>
             </button>
@@ -247,8 +248,8 @@
         <span>📱</span> <b>Auf Tablets / Touchscreens (Multi-Touch)</b>
       </div>
       <p class="text-slate-600 leading-relaxed">
-        • <b>Echtes Multi-Touch:</b> Halte mit einem Finger <b>Button 3 (↶)</b> gedrückt und tippe mit dem zweiten Finger auf <b>Punkte (1/13)</b> oder <b>Fehler (2/12)</b> zum Abziehen.<br/>
-        • <b>Einhand-Komfort:</b> Einmaliges Antippen von Button 3 aktiviert den Korrekturmodus für die nächste Taste.
+        • <b>Echtes Multi-Touch:</b> Halte mit einem Finger <b>Button 5 (KORR.)</b> gedrückt und tippe mit dem zweiten Finger auf <b>Punkte (1/13)</b> oder <b>Fehler (2/12)</b> zum Abziehen bzw. <b>Chrono (7)</b>.<br/>
+        • <b>Einhand-Komfort:</b> Einmaliges Antippen von Button 5 (KORR.) aktiviert den Korrekturmodus für die nächste Taste.
       </p>
     </div>
 
@@ -257,8 +258,8 @@
         <span>💻</span> <b>Auf Laptops / PCs (Maus & Tastatur)</b>
       </div>
       <p class="text-slate-600 leading-relaxed">
-        • <b>Tastatur:</b> Halte Taste <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-800">3</kbd> oder <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-800">Shift</kbd> gedrückt, während du mit der Maus auf Punkte klickst.<br/>
-        • <b>Maus-Klick:</b> Klicke Button 3 einmal an (leuchtet orange) ➜ klicke danach auf den Punkt-Button zum Abziehen.
+        • <b>Tastatur:</b> Halte Taste <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-800">5</kbd>, <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-800">K</kbd> oder <kbd class="px-1.5 py-0.5 bg-slate-100 border border-slate-300 rounded font-mono font-bold text-slate-800">Shift</kbd> gedrückt, während du mit der Maus auf Punkte klickst.<br/>
+        • <b>Maus-Klick:</b> Klicke Button 5 (KORR.) einmal an (leuchtet orange) ➜ klicke danach auf den Punkt-Button zum Abziehen.
       </p>
     </div>
   </div>
@@ -327,8 +328,11 @@
     let currentPeriod = 1;
     
     // Multi-Touch & Correction State
-    let isHoldingButton3 = false;
+    let isHoldingCorrection = false;
     let isToggleCorrectionActive = false;
+    let isCountUp = false;
+    let isTimeoutRunning = false;
+    let timeoutRemainingTenths = 600;
 
     const lcdGameTime = document.getElementById('lcdGameTime');
     const lcdScoreHeim = document.getElementById('lcdScoreHeim');
@@ -338,25 +342,26 @@
     const lcdPeriod = document.getElementById('lcdPeriod');
     const lcdModeLabel = document.getElementById('lcdModeLabel');
     const lastActionLog = document.getElementById('lastActionLog');
-    const btnUndo3 = document.getElementById('btnUndo3');
+    const btnKorr5 = document.getElementById('btnKorr5');
+    const btnTaste3 = document.getElementById('btnTaste3');
     const correctionStatusBadge = document.getElementById('correctionStatusBadge');
     const statusIndicatorDot = document.getElementById('statusIndicatorDot');
 
     function isCorrectionMode() {
-      return isHoldingButton3 || isToggleCorrectionActive;
+      return isHoldingCorrection || isToggleCorrectionActive;
     }
 
     function updateCorrectionUI() {
       if (isCorrectionMode()) {
-        btnUndo3.classList.add('active-held');
+        btnKorr5.classList.add('active-held');
         correctionStatusBadge.classList.remove('hidden');
         statusIndicatorDot.className = "w-2 h-2 rounded-full bg-amber-500 animate-pulse";
         lcdModeLabel.textContent = "KORR ↶";
       } else {
-        btnUndo3.classList.remove('active-held');
+        btnKorr5.classList.remove('active-held');
         correctionStatusBadge.classList.add('hidden');
         statusIndicatorDot.className = "w-2 h-2 rounded-full bg-emerald-500";
-        lcdModeLabel.textContent = "PERIODE";
+        lcdModeLabel.textContent = isTimeoutRunning ? `AUSZEIT ${Math.ceil(timeoutRemainingTenths / 10)}s` : (isCountUp ? "PAUSE" : "PERIODE");
       }
     }
 
@@ -369,12 +374,12 @@
     }
 
     function updateDisplay() {
-      lcdGameTime.textContent = formatTime(timeRemainingTenths);
+      lcdGameTime.textContent = isTimeoutRunning ? formatTime(timeoutRemainingTenths) : formatTime(timeRemainingTenths);
       lcdScoreHeim.textContent = String(scoreHeim).padStart(3, '0');
       lcdScoreGast.textContent = String(scoreGast).padStart(3, '0');
       lcdFoulsHeim.textContent = foulsHeim;
       lcdFoulsGast.textContent = foulsGast;
-      lcdPeriod.textContent = currentPeriod > 4 ? `OT${currentPeriod - 4}` : currentPeriod;
+      lcdPeriod.textContent = isTimeoutRunning ? "" : (currentPeriod > 4 ? `OT${currentPeriod - 4}` : currentPeriod);
     }
 
     function logAction(action) {
@@ -383,44 +388,70 @@
     }
 
     function tick() {
-      if (timeRemainingTenths > 0) {
+      if (isTimeoutRunning) {
+        if (timeoutRemainingTenths > 0) {
+          timeoutRemainingTenths--;
+          updateDisplay();
+          updateCorrectionUI();
+          if (timeoutRemainingTenths === 0) {
+            playHorn();
+            isTimeoutRunning = false;
+            clearInterval(timerInterval);
+            isRunning = false;
+            updateCorrectionUI();
+            updateDisplay();
+            logAction("AUSZEIT BEENDET (Signal)");
+          }
+        }
+        return;
+      }
+
+      if (isCountUp) {
+        timeRemainingTenths++;
+        updateDisplay();
+      } else if (timeRemainingTenths > 0) {
         timeRemainingTenths--;
         updateDisplay();
         if (timeRemainingTenths === 0) {
-          isRunning = false;
-          clearInterval(timerInterval);
           playHorn();
-          logAction("Sirene: Viertel beendet (00:00)");
+          isCountUp = true;
+          updateCorrectionUI();
+          logAction("Sirene: Viertel beendet – Pausenuhr läuft hoch");
         }
+      } else {
+        timeRemainingTenths++;
+        isCountUp = true;
+        updateCorrectionUI();
+        updateDisplay();
       }
     }
 
-    // MULTI-TOUCH & POINTER EVENT IMPLEMENTATION FOR BUTTON 3
-    // 1. Pointerdown on Button 3 starts holding
-    btnUndo3.addEventListener('pointerdown', (e) => {
+    // MULTI-TOUCH & POINTER EVENT IMPLEMENTATION FOR BUTTON 5 (KORR.)
+    // 1. Pointerdown on Button 5 starts holding
+    btnKorr5.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       playBeep(600, 0.05);
-      isHoldingButton3 = true;
+      isHoldingCorrection = true;
       updateCorrectionUI();
-      logAction("Button 3 (↶) gedrückt gehalten: Korrekturmodus aktiv");
+      logAction("Taste 5 (KORR.) gedrückt gehalten: Korrekturmodus aktiv");
     });
 
     // 2. Pointerup / cancel stops holding
     window.addEventListener('pointerup', () => {
-      if (isHoldingButton3) {
-        isHoldingButton3 = false;
+      if (isHoldingCorrection) {
+        isHoldingCorrection = false;
         updateCorrectionUI();
       }
     });
     window.addEventListener('pointercancel', () => {
-      if (isHoldingButton3) {
-        isHoldingButton3 = false;
+      if (isHoldingCorrection) {
+        isHoldingCorrection = false;
         updateCorrectionUI();
       }
     });
 
-    // 3. Fallback Click on Button 3 toggles sticky mode (for mouse/desktop)
-    btnUndo3.addEventListener('click', (e) => {
+    // 3. Fallback Click on Button 5 toggles sticky mode (for mouse/desktop)
+    btnKorr5.addEventListener('click', (e) => {
       if (e.pointerType === 'mouse') {
         isToggleCorrectionActive = !isToggleCorrectionActive;
         updateCorrectionUI();
@@ -428,30 +459,35 @@
       }
     });
 
-    // 4. Keyboard Support (Hold '3' or 'Shift' key)
+    // 4. Keyboard Support (Hold '5', 'k' or 'Shift' key)
     window.addEventListener('keydown', (e) => {
-      if (e.key === '3' || e.key === 'Shift') {
-        if (!isHoldingButton3) {
-          isHoldingButton3 = true;
+      if (e.key === '5' || e.key === 'k' || e.key === 'K' || e.key === 'Shift') {
+        if (!isHoldingCorrection) {
+          isHoldingCorrection = true;
           updateCorrectionUI();
         }
       }
     });
     window.addEventListener('keyup', (e) => {
-      if (e.key === '3' || e.key === 'Shift') {
-        isHoldingButton3 = false;
+      if (e.key === '5' || e.key === 'k' || e.key === 'K' || e.key === 'Shift') {
+        isHoldingCorrection = false;
         updateCorrectionUI();
       }
     });
 
-    // Actions that can be subtracted when Button 3 is held:
+    // Actions that can be subtracted when Button 5 is held:
     // Heim Punkte (Button 1)
     document.getElementById('btnPunkteHeim1').addEventListener('click', () => {
+      if (isTimeoutRunning) {
+        playBeep(350, 0.04);
+        logAction("Gesperrt: Auszeit aktiv");
+        return;
+      }
       if (isCorrectionMode()) {
         playBeep(450, 0.08);
         scoreHeim = Math.max(0, scoreHeim - 1);
-        logAction("Rücknahme: HEIM -1 Punkt (Button 3 + 1)");
-        isToggleCorrectionActive = false; // Reset toggle if used
+        logAction("Rücknahme: HEIM -1 Punkt");
+        isToggleCorrectionActive = false;
       } else {
         playBeep(1100, 0.05);
         scoreHeim += 1;
@@ -463,10 +499,15 @@
 
     // Gast Punkte (Button 13)
     document.getElementById('btnPunkteGast13').addEventListener('click', () => {
+      if (isTimeoutRunning) {
+        playBeep(350, 0.04);
+        logAction("Gesperrt: Auszeit aktiv");
+        return;
+      }
       if (isCorrectionMode()) {
         playBeep(450, 0.08);
         scoreGast = Math.max(0, scoreGast - 1);
-        logAction("Rücknahme: GAST -1 Punkt (Button 3 + 13)");
+        logAction("Rücknahme: GAST -1 Punkt");
         isToggleCorrectionActive = false;
       } else {
         playBeep(1100, 0.05);
@@ -479,10 +520,15 @@
 
     // Heim Fehler (Button 2)
     document.getElementById('btnFehlerHeim2').addEventListener('click', () => {
+      if (isTimeoutRunning) {
+        playBeep(350, 0.04);
+        logAction("Gesperrt: Auszeit aktiv");
+        return;
+      }
       if (isCorrectionMode()) {
         playBeep(400, 0.08);
         foulsHeim = Math.max(0, foulsHeim - 1);
-        logAction("Rücknahme: HEIM -1 Teamfoul (Button 3 + 2)");
+        logAction("Rücknahme: HEIM -1 Teamfoul");
         isToggleCorrectionActive = false;
       } else {
         if (foulsHeim >= 5) {
@@ -500,10 +546,15 @@
 
     // Gast Fehler (Button 12)
     document.getElementById('btnFehlerGast12').addEventListener('click', () => {
+      if (isTimeoutRunning) {
+        playBeep(350, 0.04);
+        logAction("Gesperrt: Auszeit aktiv");
+        return;
+      }
       if (isCorrectionMode()) {
         playBeep(400, 0.08);
         foulsGast = Math.max(0, foulsGast - 1);
-        logAction("Rücknahme: GAST -1 Teamfoul (Button 3 + 12)");
+        logAction("Rücknahme: GAST -1 Teamfoul");
         isToggleCorrectionActive = false;
       } else {
         if (foulsGast >= 5) {
@@ -521,16 +572,29 @@
 
     // Periode (Button 15)
     document.getElementById('btnPeriod15').addEventListener('click', () => {
+      if (isTimeoutRunning) {
+        playBeep(350, 0.04);
+        logAction("Gesperrt: Auszeit aktiv");
+        return;
+      }
       if (isCorrectionMode()) {
         currentPeriod = Math.max(1, currentPeriod - 1);
+        isCountUp = false;
         logAction(`Rücknahme: Periode auf ${currentPeriod} zurückgesetzt`);
         isToggleCorrectionActive = false;
       } else {
+        if (!isCountUp && timeRemainingTenths > 0) {
+          playBeep(350, 0.06);
+          logAction("Periode kann erst nach Ablauf der Spielzeit gewechselt werden (00:00)");
+          return;
+        }
+
         playBeep(600, 0.1);
         currentPeriod++;
         timeRemainingTenths = 10 * 60 * 10;
         foulsHeim = 0;
         foulsGast = 0;
+        isCountUp = false;
         if (isRunning) {
           isRunning = false;
           clearInterval(timerInterval);
@@ -543,14 +607,24 @@
 
     // Chrono (Button 7)
     document.getElementById('btnChrono7').addEventListener('click', () => {
+      if (isTimeoutRunning) {
+        playBeep(350, 0.04);
+        logAction("Gesperrt: Auszeit aktiv");
+        return;
+      }
       if (isCorrectionMode()) {
+        if (isCountUp || timeRemainingTenths === 0) {
+          playBeep(350, 0.05);
+          logAction("Korrektur nicht möglich: Periode ist bereits abgelaufen");
+          return;
+        }
         playBeep(650, 0.06);
         const isUnderOneMinute = timeRemainingTenths < 600;
         const increment = isUnderOneMinute ? 1 : 10;
         timeRemainingTenths = Math.min(10 * 60 * 10, timeRemainingTenths + increment);
-        isToggleCorrectionActive = false;
         const addedText = isUnderOneMinute ? "+0.1 Sekunde" : "+1 Sekunde";
         logAction(`Korrektur: ${addedText} auf Spieluhr (${formatTime(timeRemainingTenths)})`);
+        isToggleCorrectionActive = false;
         updateCorrectionUI();
         updateDisplay();
       } else {
@@ -558,10 +632,10 @@
         isRunning = !isRunning;
         if (isRunning) {
           timerInterval = setInterval(tick, 100);
-          logAction("START (Chrono läuft)");
+          logAction(isCountUp ? "START (Pausenuhr läuft)" : "START (Chrono läuft)");
         } else {
           clearInterval(timerInterval);
-          logAction("STOPP (Chrono angehalten)");
+          logAction(isCountUp ? "STOPP (Pausenuhr angehalten)" : "STOPP (Chrono angehalten)");
         }
       }
     });
@@ -576,24 +650,53 @@
     document.getElementById('btnNull4').addEventListener('click', () => {
       playBeep(400, 0.05);
       isToggleCorrectionActive = false;
-      isHoldingButton3 = false;
+      isHoldingCorrection = false;
       updateCorrectionUI();
       logAction("Korrektur abgebrochen / Reset");
     });
 
-    // Korr (Button 5) - ohne Funktion
-    const btnKorr5 = document.getElementById('btnKorr5');
-    if (btnKorr5) {
-      btnKorr5.addEventListener('click', () => {
+    // Taste 3 (↶)
+    if (btnTaste3) {
+      btnTaste3.addEventListener('click', () => {
         playBeep(700, 0.05);
-        logAction("Taste 5 (KORR.) ohne Funktion");
+        logAction("Taste 3 (↶)");
       });
     }
 
     // Auszeit (Button 6)
     document.getElementById('btnAuszeit6').addEventListener('click', () => {
-      playBeep(1200, 0.15);
-      logAction("Auszeit gestartet");
+      if (isCorrectionMode()) {
+        if (isTimeoutRunning) {
+          playBeep(450, 0.08);
+          isTimeoutRunning = false;
+          clearInterval(timerInterval);
+          isRunning = false;
+          isToggleCorrectionActive = false;
+          logAction("Korrektur: Auszeit abgebrochen");
+          updateCorrectionUI();
+          updateDisplay();
+        } else {
+          playBeep(350, 0.05);
+          logAction("Keine aktive Auszeit zum Abbrechen");
+        }
+      } else {
+        if (isTimeoutRunning) {
+          playBeep(350, 0.04);
+          logAction(`Auszeit läuft bereits (${Math.ceil(timeoutRemainingTenths / 10)}s)`);
+          return;
+        }
+        playBeep(1200, 0.15);
+        if (isRunning) {
+          clearInterval(timerInterval);
+          isRunning = false;
+        }
+        isTimeoutRunning = true;
+        timeoutRemainingTenths = 600;
+        timerInterval = setInterval(tick, 100);
+        logAction("Auszeit gestartet (60s Countdown)");
+        updateCorrectionUI();
+        updateDisplay();
+      }
     });
 
     // On/Off

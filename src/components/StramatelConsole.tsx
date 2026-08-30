@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { soundManager } from '@/lib/audio';
 import { getSocket } from '@/lib/socket';
-import { StramatelState } from '@/types';
+import { StramatelState, ShotclockState } from '@/types';
 import Link from 'next/link';
 import { ArrowLeft, Crown, RotateCcw, Maximize2, Minimize2, AlertCircle, Volume2, SlidersHorizontal } from 'lucide-react';
 
@@ -38,7 +38,7 @@ export default function StramatelConsole({
     }
   );
 
-  const [isHoldingButton3, setIsHoldingButton3] = useState(false);
+  const [isHoldingCorrection, setIsHoldingCorrection] = useState(false);
   const [isToggleCorrectionActive, setIsToggleCorrectionActive] = useState(false);
   const [lastAction, setLastAction] = useState('Bereit');
   const [socketConnected, setSocketConnected] = useState(false);
@@ -48,7 +48,7 @@ export default function StramatelConsole({
   const stateRef = useRef(state);
   stateRef.current = state;
 
-  const isCorrectionMode = isHoldingButton3 || isToggleCorrectionActive;
+  const isCorrectionMode = isHoldingCorrection || isToggleCorrectionActive;
 
   // Fullscreen tracking
   useEffect(() => {
@@ -92,11 +92,11 @@ export default function StramatelConsole({
     }
   };
 
-  // Keyboard Shortcuts ('3' or 'Shift' for Korrektur, 'f' for Fullscreen)
+  // Keyboard Shortcuts ('5', 'k' or 'Shift' for Korrektur, 'f' for Fullscreen)
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === '3' || e.key === 'Shift') {
-        setIsHoldingButton3(true);
+      if (e.key === '5' || e.key === 'k' || e.key === 'K' || e.key === 'Shift') {
+        setIsHoldingCorrection(true);
       }
       if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !(e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement)) {
         e.preventDefault();
@@ -104,8 +104,8 @@ export default function StramatelConsole({
       }
     }
     function handleKeyUp(e: KeyboardEvent) {
-      if (e.key === '3' || e.key === 'Shift') {
-        setIsHoldingButton3(false);
+      if (e.key === '5' || e.key === 'k' || e.key === 'K' || e.key === 'Shift') {
+        setIsHoldingCorrection(false);
       }
     }
     window.addEventListener('keydown', handleKeyDown);
@@ -123,12 +123,26 @@ export default function StramatelConsole({
     function onConnect() {
       setSocketConnected(true);
       setSessionError(null);
-      socket.emit('join_session', {
-        pin,
-        name: participantName,
-        role: 'zeitnehmer',
-        initialState: { stramatelState: stateRef.current },
-      });
+      socket.emit(
+        'join_session',
+        {
+          pin,
+          name: participantName,
+          role: 'zeitnehmer',
+          initialState: { stramatelState: stateRef.current },
+        },
+        (response?: { success: boolean; initialStramatelState?: StramatelState; initialShotclockState?: ShotclockState }) => {
+          if (response?.success && response.initialStramatelState) {
+            setState(response.initialStramatelState);
+          }
+        }
+      );
+    }
+
+    function onInitParticipantState(data: { stramatelState?: StramatelState }) {
+      if (data.stramatelState) {
+        setState(data.stramatelState);
+      }
     }
 
     function onSessionNotFound(data: { pin: string; message: string }) {
@@ -147,11 +161,13 @@ export default function StramatelConsole({
 
     socket.on('connect', onConnect);
     socket.on('disconnect', () => setSocketConnected(false));
+    socket.on('init_participant_state', onInitParticipantState);
     socket.on('session_not_found', onSessionNotFound);
     socket.on('session_ended', onSessionEnded);
 
     return () => {
       socket.off('connect', onConnect);
+      socket.off('init_participant_state', onInitParticipantState);
       socket.off('session_not_found', onSessionNotFound);
       socket.off('session_ended', onSessionEnded);
     };
@@ -200,25 +216,58 @@ export default function StramatelConsole({
     };
   }, []);
 
-  // Timer Tick
+  // Timer Tick (Game Clock & Timeout Countdown)
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (state.isRunning) {
+    if (state.isRunning || state.isTimeoutRunning) {
       interval = setInterval(() => {
         setState((prev) => {
-          if (prev.gameTimeTenths > 0) {
-            const nextTenths = prev.gameTimeTenths - 1;
-            const nextState = { ...prev, gameTimeTenths: nextTenths };
-            if (nextTenths === 0) {
+          // Timeout Countdown
+          if (prev.isTimeoutRunning && (prev.timeoutTenths ?? 0) > 0) {
+            const nextTimeoutTenths = (prev.timeoutTenths ?? 600) - 1;
+            const nextState: StramatelState = { ...prev, timeoutTenths: nextTimeoutTenths };
+            if (nextTimeoutTenths === 100) {
+              soundManager.playTimeoutWarning();
+              logAction('Auszeit: 50s Signal (10s verbleibend)');
+            } else if (nextTimeoutTenths === 0) {
               soundManager.playHorn();
-              logAction('SPIELZEIT ABGELAUFEN (Sirene)');
-              nextState.isRunning = false;
-              broadcastState(nextState, 'Sirene abgelaufen');
-            } else if (nextTenths % 10 === 0) {
-              // Send periodic state sync to admin every 1 second
-              broadcastState(nextState, 'Uhr läuft');
+              logAction('AUSZEIT BEENDET (Signal)');
+              nextState.isTimeoutRunning = false;
+              nextState.timeoutTenths = undefined;
+              broadcastState(nextState, 'Auszeit beendet');
+            } else if (nextTimeoutTenths % 10 === 0) {
+              broadcastState(nextState, `Auszeit (${Math.ceil(nextTimeoutTenths / 10)}s)`);
             }
             return nextState;
+          }
+
+          // Game Clock Tick
+          if (prev.isRunning) {
+            if (prev.isCountUp) {
+              const nextTenths = prev.gameTimeTenths + 1;
+              const nextState = { ...prev, gameTimeTenths: nextTenths, isCountUp: true };
+              if (nextTenths % 10 === 0) {
+                broadcastState(nextState, 'Pausenuhr läuft');
+              }
+              return nextState;
+            } else if (prev.gameTimeTenths > 0) {
+              const nextTenths = prev.gameTimeTenths - 1;
+              const nextState = { ...prev, gameTimeTenths: nextTenths };
+              if (nextTenths === 0) {
+                soundManager.playHorn();
+                logAction('SPIELZEIT ABGELAUFEN (Sirene) – Pausenuhr läuft hoch');
+                nextState.isCountUp = true;
+                nextState.isRunning = true;
+                broadcastState(nextState, 'Sirene abgelaufen – Pausenuhr aktiv');
+              } else if (nextTenths % 10 === 0) {
+                broadcastState(nextState, 'Uhr läuft');
+              }
+              return nextState;
+            } else {
+              const nextTenths = prev.gameTimeTenths + 1;
+              const nextState = { ...prev, gameTimeTenths: nextTenths, isCountUp: true };
+              return nextState;
+            }
           }
           return prev;
         });
@@ -227,7 +276,7 @@ export default function StramatelConsole({
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [state.isRunning, broadcastState, logAction]);
+  }, [state.isRunning, state.isTimeoutRunning, broadcastState, logAction]);
 
 
   const formatTime = (tenths: number) => {
@@ -240,13 +289,24 @@ export default function StramatelConsole({
 
   // Button Handlers
   const handleChrono = () => {
+    if (state.isTimeoutRunning) {
+      soundManager.playBeep(350, 0.04);
+      logAction('Gesperrt: Auszeit aktiv');
+      return;
+    }
+
     if (isCorrectionMode) {
+      if (state.isCountUp || state.gameTimeTenths === 0) {
+        soundManager.playBeep(350, 0.05);
+        logAction('Korrektur nicht möglich: Periode ist bereits abgelaufen');
+        return;
+      }
       soundManager.playBeep(650, 0.06);
       const isUnderOneMinute = state.gameTimeTenths < 600; // < 1:00.0 (600 tenths)
       const incrementTenths = isUnderOneMinute ? 1 : 10; // +0.1s (< 1 min) or +1.0s (>= 1 min)
       const maxTenths = 10 * 60 * 10; // 10:00.0
       const nextTenths = Math.min(maxTenths, state.gameTimeTenths + incrementTenths);
-      const nextState = { ...state, gameTimeTenths: nextTenths };
+      const nextState = { ...state, gameTimeTenths: nextTenths, isCountUp: false };
       setState(nextState);
       setIsToggleCorrectionActive(false);
       const addedText = isUnderOneMinute ? '+0.1 Sekunde' : '+1 Sekunde';
@@ -257,7 +317,9 @@ export default function StramatelConsole({
       soundManager.playBeep(900, 0.08);
       const nextRunning = !state.isRunning;
       const nextState = { ...state, isRunning: nextRunning };
-      const actionText = nextRunning ? 'CHRONO START' : 'CHRONO STOP';
+      const actionText = state.isCountUp
+        ? (nextRunning ? 'PAUSENUHR START' : 'PAUSENUHR STOP')
+        : (nextRunning ? 'CHRONO START' : 'CHRONO STOP');
       setState(nextState);
       logAction(actionText);
       broadcastState(nextState, actionText);
@@ -265,6 +327,12 @@ export default function StramatelConsole({
   };
 
   const handlePunkteHeim = () => {
+    if (state.isTimeoutRunning) {
+      soundManager.playBeep(350, 0.04);
+      logAction('Gesperrt: Auszeit aktiv');
+      return;
+    }
+
     if (isCorrectionMode) {
       soundManager.playBeep(450, 0.08);
       const nextScore = Math.max(0, state.scoreHeim - 1);
@@ -284,6 +352,12 @@ export default function StramatelConsole({
   };
 
   const handlePunkteGast = () => {
+    if (state.isTimeoutRunning) {
+      soundManager.playBeep(350, 0.04);
+      logAction('Gesperrt: Auszeit aktiv');
+      return;
+    }
+
     if (isCorrectionMode) {
       soundManager.playBeep(450, 0.08);
       const nextScore = Math.max(0, state.scoreGast - 1);
@@ -303,6 +377,12 @@ export default function StramatelConsole({
   };
 
   const handleFehlerHeim = () => {
+    if (state.isTimeoutRunning) {
+      soundManager.playBeep(350, 0.04);
+      logAction('Gesperrt: Auszeit aktiv');
+      return;
+    }
+
     if (isCorrectionMode) {
       soundManager.playBeep(400, 0.08);
       const nextFouls = Math.max(0, state.foulsHeim - 1);
@@ -327,6 +407,12 @@ export default function StramatelConsole({
   };
 
   const handleFehlerGast = () => {
+    if (state.isTimeoutRunning) {
+      soundManager.playBeep(350, 0.04);
+      logAction('Gesperrt: Auszeit aktiv');
+      return;
+    }
+
     if (isCorrectionMode) {
       soundManager.playBeep(400, 0.08);
       const nextFouls = Math.max(0, state.foulsGast - 1);
@@ -351,15 +437,28 @@ export default function StramatelConsole({
   };
 
   const handlePeriod = () => {
+    if (state.isTimeoutRunning) {
+      soundManager.playBeep(350, 0.04);
+      logAction('Gesperrt: Auszeit aktiv');
+      return;
+    }
+
     if (isCorrectionMode) {
       soundManager.playBeep(450, 0.08);
       const nextPeriod = Math.max(1, state.period - 1);
-      const nextState = { ...state, period: nextPeriod };
+      const nextState = { ...state, period: nextPeriod, isCountUp: false };
       setState(nextState);
       setIsToggleCorrectionActive(false);
       logAction(`Korrektur: Periode auf ${nextPeriod}`);
       broadcastState(nextState, `Periode ${nextPeriod}`);
     } else {
+      // Period switch is only allowed if current period time is expired (isCountUp or gameTimeTenths === 0)
+      if (!state.isCountUp && state.gameTimeTenths > 0) {
+        soundManager.playBeep(350, 0.06);
+        logAction('Periode kann erst nach Ablauf der Spielzeit gewechselt werden (00:00)');
+        return;
+      }
+
       soundManager.playBeep(600, 0.1);
       const nextPeriod = state.period + 1;
       const nextState = {
@@ -369,6 +468,7 @@ export default function StramatelConsole({
         foulsHeim: 0,
         foulsGast: 0,
         isRunning: false,
+        isCountUp: false,
       };
       setState(nextState);
       logAction(`Neues Viertel: Periode ${nextPeriod} (Zeit 10:00, Fouls 0)`);
@@ -387,20 +487,46 @@ export default function StramatelConsole({
 
   const handleNull = () => {
     soundManager.playBeep(400, 0.05);
-    setIsHoldingButton3(false);
+    setIsHoldingCorrection(false);
     setIsToggleCorrectionActive(false);
     logAction('Korrektur abgebrochen / Reset');
   };
 
-  const handleKorr5 = () => {
+  const handleTaste3 = () => {
     soundManager.playBeep(700, 0.05);
-    logAction('Taste 5 (KORR.) ohne Funktion');
+    logAction('Taste 3 (↶)');
   };
 
   const handleAuszeit = () => {
-    soundManager.playBeep(1200, 0.15);
-    logAction('Auszeit gestartet');
-    broadcastState(state, 'Auszeit gestartet');
+    if (isCorrectionMode) {
+      if (state.isTimeoutRunning) {
+        soundManager.playBeep(450, 0.08);
+        const nextState = { ...state, isTimeoutRunning: false, timeoutTenths: undefined };
+        setState(nextState);
+        setIsToggleCorrectionActive(false);
+        logAction('Korrektur: Auszeit abgebrochen');
+        broadcastState(nextState, 'Auszeit abgebrochen');
+      } else {
+        soundManager.playBeep(350, 0.05);
+        logAction('Keine aktive Auszeit zum Abbrechen');
+      }
+    } else {
+      if (state.isTimeoutRunning) {
+        soundManager.playBeep(350, 0.04);
+        logAction(`Auszeit läuft bereits (${Math.ceil((state.timeoutTenths ?? 600) / 10)}s)`);
+        return;
+      }
+      soundManager.playBeep(1200, 0.15);
+      const nextState = {
+        ...state,
+        isRunning: false, // Stoppt Spieluhr
+        isTimeoutRunning: true,
+        timeoutTenths: 60 * 10, // 60.0s (600 Zehntel)
+      };
+      setState(nextState);
+      logAction('Auszeit gestartet (60s Countdown)');
+      broadcastState(nextState, 'Auszeit gestartet (60s)');
+    }
   };
 
   if (sessionError) {
@@ -566,17 +692,21 @@ export default function StramatelConsole({
 
                 {/* LCD Display */}
                 <div className="lcd-screen w-full rounded-md flex flex-col justify-between border-2 border-[#d97706] p-2 sm:p-2.5 md:p-3 shadow-inner min-h-[68px] sm:min-h-[82px] md:min-h-[96px] gap-1.5 sm:gap-2">
-                  {/* Top LCD Row: Scores and Game Clock */}
+                  {/* Top LCD Row: Scores and Game Clock / Timeout Countdown */}
                   <div className="flex justify-between items-center font-bold tracking-wider px-1 sm:px-2">
                     <span className="font-black text-lg sm:text-2xl md:text-3xl leading-none">{String(state.scoreHeim).padStart(3, '0')}</span>
-                    <span className="font-black tracking-widest text-[#0a1805] text-xl sm:text-3xl md:text-4xl leading-none">{formatTime(state.gameTimeTenths)}</span>
+                    <span className={`font-black tracking-widest text-[#0a1805] text-xl sm:text-3xl md:text-4xl leading-none ${state.isTimeoutRunning ? 'text-amber-950 animate-pulse' : ''}`}>
+                      {state.isTimeoutRunning ? formatTime(state.timeoutTenths ?? 600) : formatTime(state.gameTimeTenths)}
+                    </span>
                     <span className="font-black text-lg sm:text-2xl md:text-3xl leading-none">{String(state.scoreGast).padStart(3, '0')}</span>
                   </div>
-                  {/* Bottom LCD Row: Fouls and Quarter */}
+                  {/* Bottom LCD Row: Fouls and Quarter / Timeout Badge */}
                   <div className="flex justify-between items-center font-semibold border-t border-black/25 pt-1 sm:pt-1.5 text-[10px] sm:text-xs md:text-sm px-1 sm:px-2 leading-none">
                     <span>FOULS: <b className="text-xs sm:text-sm md:text-base">{state.foulsHeim}</b></span>
-                    <span className="bg-[#788e31] px-2 py-0.5 rounded text-[#0a1805] font-black text-[9px] sm:text-xs md:text-sm">
-                      {isCorrectionMode ? 'KORR ↶' : 'PERIODE'} {state.period > 4 ? `OT${state.period - 4}` : state.period}
+                    <span className={`px-2 py-0.5 rounded font-black text-[9px] sm:text-xs md:text-sm ${
+                      state.isTimeoutRunning ? 'bg-amber-400 text-amber-950 animate-pulse' : 'bg-[#788e31] text-[#0a1805]'
+                    }`}>
+                      {isCorrectionMode ? 'KORR ↶' : (state.isTimeoutRunning ? `AUSZEIT ${Math.ceil((state.timeoutTenths ?? 600) / 10)}s` : (state.isCountUp ? 'PAUSE' : 'PERIODE'))} {!state.isTimeoutRunning && (state.period > 4 ? `OT${state.period - 4}` : state.period)}
                     </span>
                     <span>FOULS: <b className="text-xs sm:text-sm md:text-base">{state.foulsGast}</b></span>
                   </div>
@@ -588,7 +718,7 @@ export default function StramatelConsole({
                 <button 
                   onClick={handlePeriod}
                   className={roundBtnClass}
-                  title="Nächstes Viertel (setzt Zeit auf 10:00 & Fouls auf 0)"
+                  title={isCorrectionMode ? "Korrektur: Vorherige Periode" : (state.isCountUp || state.gameTimeTenths === 0 ? "Nächstes Viertel (setzt Zeit auf 10:00 & Fouls auf 0)" : "Periode / Extrazeit (erst nach Ablauf der Spielzeit 00:00 aktiv)")}
                 >
                   <span className="text-[8px] sm:text-[9px] md:text-[10px] lg:text-[11px] font-black leading-none">PERIODE</span>
                   <span className="text-[7px] sm:text-[8px] md:text-[9px] lg:text-[10px] font-bold leading-none mt-0.5">EXTRAZEIT</span>
@@ -637,26 +767,12 @@ export default function StramatelConsole({
                   <span className="text-[9px] sm:text-[10px] md:text-xs lg:text-[13px] font-black tracking-tight">NULL</span>
                   <span className="text-xs sm:text-sm md:text-base lg:text-lg font-black mt-0.5 sm:mt-1">4</span>
                 </button>
-                {/* ↶ 3 (Multi-Touch Pointer Event + Desktop Toggle) */}
+                {/* ↶ 3 */}
                 <button 
-                  id="btnUndo3"
-                  onPointerDown={(e) => {
-                    e.preventDefault();
-                    soundManager.playBeep(600, 0.05);
-                    setIsHoldingButton3(true);
-                    logAction('Button 3 (↶) gedrückt gehalten: Korrekturmodus');
-                  }}
-                  onPointerUp={() => setIsHoldingButton3(false)}
-                  onPointerCancel={() => setIsHoldingButton3(false)}
-                  onClick={(e) => {
-                    const nativeEv = e.nativeEvent as unknown as { pointerType?: string };
-                    if (!nativeEv.pointerType || nativeEv.pointerType === 'mouse') {
-                      setIsToggleCorrectionActive((prev) => !prev);
-                      logAction(!isToggleCorrectionActive ? 'Korrekturmodus (Toggle) AKTIV' : 'Korrekturmodus INAKTIV');
-                    }
-                  }}
-                  className={`${roundBtnClass} ${isCorrectionMode ? 'active-held ring-2 ring-amber-400' : ''}`}
-                  title="Korrektur / Rücknahme (3) - Gedrückt halten oder anklicken"
+                  id="btnTaste3"
+                  onClick={handleTaste3}
+                  className={roundBtnClass}
+                  title="Taste 3 (↶)"
                 >
                   <svg className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 stroke-current fill-none stroke-[2.5]" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
@@ -668,10 +784,26 @@ export default function StramatelConsole({
               {/* 3. COLUMN: Empty spacer (top) & KORR. 5 (bottom) */}
               <div className="flex flex-col items-center justify-between py-1">
                 <div className="w-13 h-13 sm:w-15 sm:h-15 md:w-18 md:h-18 lg:w-20 lg:h-20 opacity-0 pointer-events-none" />
+                {/* KORR. 5 (Multi-Touch Pointer Event + Desktop Toggle) */}
                 <button 
-                  onClick={handleKorr5}
-                  className={roundBtnClass}
-                  title="Taste 5 (KORR.)"
+                  id="btnKorr5"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    soundManager.playBeep(600, 0.05);
+                    setIsHoldingCorrection(true);
+                    logAction('Taste 5 (KORR.) gedrückt gehalten: Korrekturmodus');
+                  }}
+                  onPointerUp={() => setIsHoldingCorrection(false)}
+                  onPointerCancel={() => setIsHoldingCorrection(false)}
+                  onClick={(e) => {
+                    const nativeEv = e.nativeEvent as unknown as { pointerType?: string };
+                    if (!nativeEv.pointerType || nativeEv.pointerType === 'mouse') {
+                      setIsToggleCorrectionActive((prev) => !prev);
+                      logAction(!isToggleCorrectionActive ? 'Korrekturmodus (Toggle) AKTIV' : 'Korrekturmodus INAKTIV');
+                    }
+                  }}
+                  className={`${roundBtnClass} ${isCorrectionMode ? 'active-held ring-2 ring-amber-400' : ''}`}
+                  title="Korrektur / Rücknahme (5 - KORR.) - Gedrückt halten oder anklicken"
                 >
                   <span className="text-[9px] sm:text-[10px] md:text-xs lg:text-[13px] font-black tracking-tight">KORR.</span>
                   <span className="text-xs sm:text-sm md:text-base lg:text-lg font-black mt-0.5 sm:mt-1">5</span>
@@ -692,8 +824,8 @@ export default function StramatelConsole({
                   {/* AUSZEIT 6 */}
                   <button 
                     onClick={handleAuszeit}
-                    className={roundBtnClass}
-                    title="Auszeit starten (6)"
+                    className={`${roundBtnClass} ${state.isTimeoutRunning ? 'ring-2 ring-amber-400 bg-amber-400/20 text-amber-900 animate-pulse' : ''}`}
+                    title={state.isTimeoutRunning ? "Auszeit läuft (Taste 5 KORR. + Klick zum Abbrechen)" : "Auszeit starten (60s Countdown)"}
                   >
                     <span className="text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs font-black tracking-tight">AUSZEIT</span>
                     <span className="text-xs sm:text-sm md:text-base lg:text-lg font-black mt-0.5 sm:mt-1">6</span>
@@ -721,7 +853,7 @@ export default function StramatelConsole({
                 <button 
                   onClick={handleChrono}
                   className={roundBtnClass}
-                  title="Spielzeit Start / Stopp (7) oder +1s / +0.1s bei Taste 3"
+                  title="Spielzeit Start / Stopp (7) oder +1s / +0.1s bei Taste 5 (KORR.)"
                 >
                   <span className="text-[8px] sm:text-[9px] md:text-[10px] lg:text-xs font-black tracking-tight">CHRONO.</span>
                   <span className="text-xs sm:text-sm md:text-base lg:text-lg font-black mt-0.5 sm:mt-1">7</span>
@@ -825,7 +957,7 @@ export default function StramatelConsole({
           </span>
         ) : (
           <span className="text-slate-400 font-mono text-[11px]">
-            Tipp: Taste 3 gedrückt halten + Punkte/Fouls tippen (Abziehen) oder Chrono (Zeit wieder aufbuchen)
+            Tipp: Taste 5 (KORR.) gedrückt halten + Punkte/Fouls tippen (Abziehen) oder Chrono (Zeit wieder aufbuchen)
           </span>
         )}
       </div>
