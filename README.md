@@ -49,7 +49,7 @@ Alle Teilnehmer bedienen parallel ihr eigenes virtuelles Bedienpult. Der Schulun
 - **Korrektur-Optionen**: Manuelle Feinjustierung der Angriffszeit im Zehntelsekundenbereich.
 
 ### 3. Trainer- / Admin-Dashboard
-- **Sitzungsverwaltung**: Erstellung geschützter Sitzungen mit einprägsamen Basketball-PINs (z. B. `DUNK-42`) und 4-stelliger Admin-PIN.
+- **Sitzungsverwaltung**: Erstellung geschützter Sitzungen mit einprägsamen Basketball-PINs (z. B. `DUNK42`) und 4-stelliger Admin-PIN.
 - **Echtzeit-Teilnehmerübersicht**: Live-Monitoring aller verbundenen Geräte (Rolle, Status, Spielzeit, 24s-Zeit, Aktionen).
 - **Fehler- & Abweichungserkennung**: Automatische Warnanzeigen bei Abweichungen außerhalb konfigurierbarer Toleranzen (Uhrzeit, Shotclock, Punkte, Fouls).
 - **Master-Konfiguration**:

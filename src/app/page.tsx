@@ -121,7 +121,7 @@ function LobbyContent() {
     // Fallback if HTTP endpoint fails
     const randomWord = BASKETBALL_WORDS[Math.floor(Math.random() * BASKETBALL_WORDS.length)];
     const randomNum = Math.floor(10 + Math.random() * 90);
-    const randomPin = `${randomWord}-${randomNum}`;
+    const randomPin = `${randomWord}${randomNum}`;
     const token = 'adm_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     try {
       localStorage.setItem(`kampfgericht_admin_token_${randomPin}`, token);
@@ -209,7 +209,7 @@ function LobbyContent() {
             <input
               type="text"
               required
-              placeholder="z. B. DUNK-42"
+              placeholder="z. B. DUNK42"
               value={pin}
               onChange={(e) => {
                 setPin(e.target.value);
@@ -379,7 +379,7 @@ function LobbyContent() {
                   type="text"
                   required
                   autoFocus
-                  placeholder="z. B. DUNK-42"
+                  placeholder="z. B. DUNK42"
                   value={adminJoinPin}
                   onChange={(e) => {
                     setAdminJoinPin(e.target.value);

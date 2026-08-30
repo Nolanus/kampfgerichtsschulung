@@ -49,12 +49,12 @@ export function generateUniqueSessionPin(): string {
   for (let i = 0; i < 100; i++) {
     const word = BASKETBALL_WORDS[Math.floor(Math.random() * BASKETBALL_WORDS.length)];
     const num = Math.floor(10 + Math.random() * 90);
-    const pin = `${word}-${num}`;
+    const pin = `${word}${num}`;
     if (!sessions[pin]) {
       return pin;
     }
   }
-  return `GAME-${Math.floor(1000 + Math.random() * 9000)}`;
+  return `GAME${Math.floor(1000 + Math.random() * 9000)}`;
 }
 
 export function getOrCreateSession(pin: string, initialAdminToken?: string): SessionData {
