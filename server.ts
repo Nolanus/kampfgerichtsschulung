@@ -333,7 +333,12 @@ app.prepare().then(() => {
           role: ConsoleRole;
           initialState?: { stramatelState?: StramatelState; shotclockState?: ShotclockState };
         },
-        callback?: (response: { success: boolean; error?: string }) => void
+        callback?: (response: {
+          success: boolean;
+          error?: string;
+          initialStramatelState?: StramatelState;
+          initialShotclockState?: ShotclockState;
+        }) => void
       ) => {
         const pin = data.pin ? data.pin.toUpperCase().trim() : '';
         const session = sessions[pin];
@@ -354,6 +359,8 @@ app.prepare().then(() => {
 
         socket.join(`session:${pin}`);
 
+        const { activeStramatel, activeShotclock } = getActiveMasterStates(session);
+
         session.participants[socket.id] = {
           id: socket.id,
           name: data.name,
@@ -361,29 +368,22 @@ app.prepare().then(() => {
           joinedAt: Date.now(),
           lastAction: 'Beigetreten',
           lastActionTime: Date.now(),
-          stramatelState: data.initialState?.stramatelState || {
-            gameTimeTenths: 10 * 60 * 10,
-            isRunning: false,
-            scoreHeim: 0,
-            scoreGast: 0,
-            foulsHeim: 0,
-            foulsGast: 0,
-            period: 1,
-            timeoutsHeim: 0,
-            timeoutsGast: 0,
-          },
-          shotclockState: data.initialState?.shotclockState || {
-            shotclockTenths: 240,
-            isRunning: false,
-            isDisplayOff: false,
-            timeoutSecondsLeft: null,
-            isTimeoutRunning: false,
-          },
+          stramatelState: { ...activeStramatel },
+          shotclockState: { ...activeShotclock },
         };
 
         if (typeof callback === 'function') {
-          callback({ success: true });
+          callback({
+            success: true,
+            initialStramatelState: activeStramatel,
+            initialShotclockState: activeShotclock,
+          });
         }
+
+        socket.emit('init_participant_state', {
+          stramatelState: activeStramatel,
+          shotclockState: activeShotclock,
+        });
 
         broadcastSession(pin);
       }

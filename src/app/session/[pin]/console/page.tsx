@@ -126,10 +126,20 @@ function ConsoleContent({ pin }: { pin: string }) {
       setSessionEnded(true);
     }
 
+    function onInitParticipantState(payload: { stramatelState?: StramatelState; shotclockState?: ShotclockState }) {
+      if (payload.stramatelState) {
+        setLatestStramatelState(payload.stramatelState);
+      }
+      if (payload.shotclockState) {
+        setLatestShotclockState(payload.shotclockState);
+      }
+    }
+
     socket.on('session_state', onSessionUpdate);
     socket.on('session_updated', onSessionUpdate);
     socket.on('role_switched', onRoleSwitched);
     socket.on('force_sync_to_master', onForceSync);
+    socket.on('init_participant_state', onInitParticipantState);
     socket.on('session_ended', onSessionEnded);
     socket.on('session_not_found', onSessionEnded);
 
@@ -138,6 +148,7 @@ function ConsoleContent({ pin }: { pin: string }) {
       socket.off('session_updated', onSessionUpdate);
       socket.off('role_switched', onRoleSwitched);
       socket.off('force_sync_to_master', onForceSync);
+      socket.off('init_participant_state', onInitParticipantState);
       socket.off('session_ended', onSessionEnded);
       socket.off('session_not_found', onSessionEnded);
     };

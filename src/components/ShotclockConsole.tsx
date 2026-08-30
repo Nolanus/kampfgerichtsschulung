@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { soundManager } from '@/lib/audio';
 import { getSocket } from '@/lib/socket';
-import { ShotclockState } from '@/types';
+import { ShotclockState, StramatelState } from '@/types';
 import Link from 'next/link';
 import { ArrowLeft, Crown, RotateCcw, Maximize2, Minimize2, AlertCircle, Volume2, Timer } from 'lucide-react';
 
@@ -99,12 +99,26 @@ export default function ShotclockConsole({
     function onConnect() {
       setSocketConnected(true);
       setSessionError(null);
-      socket.emit('join_session', {
-        pin,
-        name: participantName,
-        role: 'shotclock',
-        initialState: { shotclockState: stateRef.current },
-      });
+      socket.emit(
+        'join_session',
+        {
+          pin,
+          name: participantName,
+          role: 'shotclock',
+          initialState: { shotclockState: stateRef.current },
+        },
+        (response?: { success: boolean; initialStramatelState?: StramatelState; initialShotclockState?: ShotclockState }) => {
+          if (response?.success && response.initialShotclockState) {
+            setState(response.initialShotclockState);
+          }
+        }
+      );
+    }
+
+    function onInitParticipantState(data: { shotclockState?: ShotclockState }) {
+      if (data.shotclockState) {
+        setState(data.shotclockState);
+      }
     }
 
     function onSessionNotFound(data: { pin: string; message: string }) {
@@ -123,11 +137,13 @@ export default function ShotclockConsole({
 
     socket.on('connect', onConnect);
     socket.on('disconnect', () => setSocketConnected(false));
+    socket.on('init_participant_state', onInitParticipantState);
     socket.on('session_not_found', onSessionNotFound);
     socket.on('session_ended', onSessionEnded);
 
     return () => {
       socket.off('connect', onConnect);
+      socket.off('init_participant_state', onInitParticipantState);
       socket.off('session_not_found', onSessionNotFound);
       socket.off('session_ended', onSessionEnded);
     };
